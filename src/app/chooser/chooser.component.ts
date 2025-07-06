@@ -23,28 +23,46 @@ export default class ChooserComponent implements OnDestroy {
   private selectionTimer: any = null;
   private animationStartTime: number | null = null;
   private animationFrameId: number | null = null;
-  private baseRadius: number = 50;
+  private baseRadius: number = 70;
   private isAnimating: boolean = false;
 
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d')!;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    this.clearCanvas();
+    this.setupCanvas();
 
     // Handle window resize
     window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      this.setupCanvas();
       this.drawTouches();
     });
 
     canvas.addEventListener('touchstart', this.handleTouchStart.bind(this));
     canvas.addEventListener('touchmove', this.handleTouchMove.bind(this));
     canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
+  }
+
+  private setupCanvas(): void {
+    const canvas = this.canvasRef.nativeElement;
+    const devicePixelRatio = window.devicePixelRatio || 1;
+
+    // Obtenir les dimensions d'affichage
+    const displayWidth = window.innerWidth;
+    const displayHeight = window.innerHeight;
+
+    // Définir les dimensions CSS du canvas
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
+
+    // Définir les dimensions physiques du canvas en tenant compte du devicePixelRatio
+    canvas.width = displayWidth * devicePixelRatio;
+    canvas.height = displayHeight * devicePixelRatio;
+
+    // Ajuster l'échelle du contexte pour compenser le devicePixelRatio
+    this.ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    this.clearCanvas();
   }
 
   private handleTouchStart(e: TouchEvent): void {
@@ -69,7 +87,7 @@ export default class ChooserComponent implements OnDestroy {
   private clearCanvas(): void {
     const canvas = this.canvasRef.nativeElement;
     this.ctx.fillStyle = 'black';
-    this.ctx.fillRect(0, 0, canvas.width, canvas.height);
+    this.ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
   }
 
   private handleTouchMove(e: TouchEvent): void {
@@ -110,10 +128,9 @@ export default class ChooserComponent implements OnDestroy {
   }
 
   private drawTouches(): void {
-    const canvas = this.canvasRef.nativeElement;
     // Clear canvas
     this.ctx.fillStyle = 'black';
-    this.ctx.fillRect(0, 0, canvas.width, canvas.height);
+    this.ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
     const currentRadius = this.getCurrentRadius();
 
