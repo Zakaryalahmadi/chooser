@@ -1,0 +1,11 @@
+<div *ngIf="jobPost.title">
+  <h3 *ngIf="!jobPost.url" class="text-lg font-bold">
+    {{ jobPost.title }}
+  </h3>
+  <a *ngIf="jobPost.url" [href]="jobPost.url" target="_blank">{{
+    jobPost.title
+  }}</a>
+  <p class="text-sm text-gray-500">
+    {{ jobPost.timeInSeconds | date : "dd/MM/yyyy" }}
+  </p>
+</div>

@@ -1,0 +1,6 @@
+<h1 class="text-2xl font-bold">HN Jobs</h1>
+<ng-container *ngIf="jobPosts$ | async as jobPosts">
+  <app-job-board-list class="" [jobPosts]="jobPosts"></app-job-board-list>
+  <button pButton label="Load more" (click)="loadMore()"></button>
+</ng-container>
+<p-progressSpinner *ngIf="isLoading$$ | async" ariaLabel="loading" />
