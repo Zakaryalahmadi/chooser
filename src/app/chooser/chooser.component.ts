@@ -32,6 +32,9 @@ export default class ChooserComponent implements OnDestroy {
   private textScale: number = 1;
   private textAnimationStart: number = 0;
 
+  // Vibration variables
+  private vibrationInterval: any = null;
+
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d')!;
@@ -222,6 +225,29 @@ export default class ChooserComponent implements OnDestroy {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    // Arrêter la vibration
+    this.stopVibration();
+  }
+
+  private startVibration(): void {
+    // Vérifier si l'API vibration est supportée
+    if ('vibrate' in navigator) {
+      // Vibration continue avec des pulsations courtes
+      this.vibrationInterval = setInterval(() => {
+        navigator.vibrate(100); // Vibration de 100ms
+      }, 200); // Répéter toutes les 200ms
+    }
+  }
+
+  private stopVibration(): void {
+    if (this.vibrationInterval) {
+      clearInterval(this.vibrationInterval);
+      this.vibrationInterval = null;
+    }
+    // Arrêter toute vibration en cours
+    if ('vibrate' in navigator) {
+      navigator.vibrate(0);
+    }
   }
 
   private animateFrame(): void {
@@ -237,8 +263,9 @@ export default class ChooserComponent implements OnDestroy {
       clearTimeout(this.selectionTimer);
     }
 
-    // Arrêter l'animation précédente
+    // Arrêter l'animation et la vibration précédente
     this.stopAnimation();
+    this.stopVibration();
 
     // Réinitialiser la sélection et le countdown
     this.selectedTouchId = null;
@@ -277,8 +304,9 @@ export default class ChooserComponent implements OnDestroy {
         this.isCountdownActive = false;
         this.drawTouches();
 
-        // Commencer l'animation des cercles
+        // Commencer l'animation des cercles et la vibration
         this.startContinuousAnimation();
+        this.startVibration();
 
         // Attendre 3 secondes avant de faire la sélection
         this.selectionTimer = setTimeout(() => {
@@ -303,6 +331,11 @@ export default class ChooserComponent implements OnDestroy {
     const randomIndex = Math.floor(Math.random() * touchIds.length);
     this.selectedTouchId = touchIds[randomIndex];
 
+    // Vibration finale plus intense pour signaler la sélection
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200, 100, 400]); // Pattern de vibration finale
+    }
+
     // Redessiner le canvas
     this.drawTouches();
   }
@@ -313,7 +346,8 @@ export default class ChooserComponent implements OnDestroy {
       clearTimeout(this.selectionTimer);
     }
 
-    // Nettoyer l'animation
+    // Nettoyer l'animation et la vibration
     this.stopAnimation();
+    this.stopVibration();
   }
 }
