@@ -21,6 +21,10 @@ export default class ChooserComponent implements OnDestroy {
   private touches: { [id: string]: TouchPoint } = {};
   private selectedTouchId: string | null = null;
   private selectionTimer: any = null;
+  private animationStartTime: number | null = null;
+  private animationFrameId: number | null = null;
+  private baseRadius: number = 50;
+  private isAnimating: boolean = false;
 
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
@@ -94,20 +98,53 @@ export default class ChooserComponent implements OnDestroy {
     this.resetSelectionTimer();
   }
 
+  private getCurrentRadius(): number {
+    if (!this.isAnimating) {
+      return this.baseRadius;
+    }
+
+    // Animation continue - oscillation constante
+    const time = Date.now() / 1000; // Temps en secondes
+    const scale = 1 - 0.2 * Math.sin(time * 4); // Oscillation rapide
+    return this.baseRadius * scale;
+  }
+
   private drawTouches(): void {
     const canvas = this.canvasRef.nativeElement;
     // Clear canvas
     this.ctx.fillStyle = 'black';
     this.ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    const currentRadius = this.getCurrentRadius();
+
     // Draw all touches
     Object.entries(this.touches).forEach(([id, touch]) => {
       this.ctx.beginPath();
-      this.ctx.arc(touch.x, touch.y, 50, 0, Math.PI * 2);
+      this.ctx.arc(touch.x, touch.y, currentRadius, 0, Math.PI * 2);
       // Utiliser la couleur rouge si c'est le cercle sélectionné, sinon blanc
       this.ctx.fillStyle = this.selectedTouchId === id ? 'red' : 'white';
       this.ctx.fill();
     });
+  }
+
+  private startContinuousAnimation(): void {
+    this.isAnimating = true;
+    this.animateFrame();
+  }
+
+  private stopAnimation(): void {
+    this.isAnimating = false;
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+  }
+
+  private animateFrame(): void {
+    if (!this.isAnimating) return;
+
+    this.drawTouches();
+    this.animationFrameId = requestAnimationFrame(() => this.animateFrame());
   }
 
   private resetSelectionTimer(): void {
@@ -115,6 +152,9 @@ export default class ChooserComponent implements OnDestroy {
     if (this.selectionTimer) {
       clearTimeout(this.selectionTimer);
     }
+
+    // Arrêter l'animation précédente
+    this.stopAnimation();
 
     // Réinitialiser la sélection
     this.selectedTouchId = null;
@@ -124,8 +164,15 @@ export default class ChooserComponent implements OnDestroy {
     const touchIds = Object.keys(this.touches);
     if (touchIds.length > 0) {
       this.selectionTimer = setTimeout(() => {
-        this.selectRandomCircle();
-      }, 5000); // 5 secondes
+        // Après 5 secondes, commencer l'animation continue
+        this.startContinuousAnimation();
+
+        // Attendre encore 3 secondes avant de faire la sélection
+        setTimeout(() => {
+          this.selectRandomCircle();
+          this.stopAnimation();
+        }, 3000);
+      }, 5000); // 5 secondes d'attente
     }
   }
 
@@ -150,5 +197,8 @@ export default class ChooserComponent implements OnDestroy {
     if (this.selectionTimer) {
       clearTimeout(this.selectionTimer);
     }
+
+    // Nettoyer l'animation
+    this.stopAnimation();
   }
 }
