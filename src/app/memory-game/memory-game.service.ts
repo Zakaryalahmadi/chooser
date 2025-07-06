@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { MemoryGameUtils } from './utils';
 
-export const MEMORY_GAME_ROWS = 6;
-export const MEMORY_GAME_COLUMNS = 6;
+export const MEMORY_GAME_ROWS = 4;
+export const MEMORY_GAME_COLUMNS = 3;
 export const MEMORY_GAME_TOTAL_CARDS = MEMORY_GAME_ROWS * MEMORY_GAME_COLUMNS;
 
 export type MemoryGameCard = {
@@ -46,6 +46,8 @@ export class MemoryGameService {
     );
 
     const duplicatedNumbers = [...allNumbers, ...allNumbers];
+
+    console.log('duplicatedNumbers', duplicatedNumbers);
 
     const ShuffledNumbers: number[] =
       MemoryGameUtils.shuffleArrayOfNumbers(duplicatedNumbers);

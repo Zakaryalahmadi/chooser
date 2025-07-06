@@ -1,6 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { MemoryGameCard, MemoryGameService } from './memory-game.service';
+import {
+  MEMORY_GAME_COLUMNS,
+  MEMORY_GAME_ROWS,
+  MemoryGameCard,
+  MemoryGameService,
+} from './memory-game.service';
 import { ButtonModule } from 'primeng/button';
 
 @Component({
@@ -13,6 +18,8 @@ import { ButtonModule } from 'primeng/button';
 export default class MemoryGameComponent implements OnInit {
   private readonly memoryGameService: MemoryGameService =
     inject(MemoryGameService);
+
+  readonly MEMORY_GAME_COLUMNS = MEMORY_GAME_COLUMNS;
 
   readonly cards$ = this.memoryGameService.getCards$();
 
