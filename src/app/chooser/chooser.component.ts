@@ -26,6 +26,12 @@ export default class ChooserComponent implements OnDestroy {
   private baseRadius: number = 70;
   private isAnimating: boolean = false;
 
+  // Timer variables
+  private countdownValue: number = 5;
+  private isCountdownActive: boolean = false;
+  private textScale: number = 1;
+  private textAnimationStart: number = 0;
+
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d')!;
@@ -142,6 +148,56 @@ export default class ChooserComponent implements OnDestroy {
       this.ctx.fillStyle = this.selectedTouchId === id ? 'red' : 'white';
       this.ctx.fill();
     });
+
+    // Draw countdown text if active
+    if (this.isCountdownActive) {
+      this.drawCountdownText();
+    }
+  }
+
+  private drawCountdownText(): void {
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    // Animation de scale
+    const currentTime = Date.now();
+    const elapsed = currentTime - this.textAnimationStart;
+    const duration = 1000; // 1 seconde par chiffre
+
+    let scale = 1;
+    if (elapsed < duration) {
+      // Animation: commence grand, devient petit, puis disparaît
+      const progress = elapsed / duration;
+      if (progress < 0.3) {
+        // Phase d'apparition (0 à 0.3)
+        scale = 1 + (progress / 0.3) * 0.5; // De 1 à 1.5
+      } else if (progress < 0.7) {
+        // Phase stable (0.3 à 0.7)
+        scale = 1.5;
+      } else {
+        // Phase de disparition (0.7 à 1)
+        const fadeProgress = (progress - 0.7) / 0.3;
+        scale = 1.5 - fadeProgress * 1.5; // De 1.5 à 0
+      }
+    }
+
+    if (scale > 0) {
+      this.ctx.save();
+      this.ctx.translate(centerX, centerY);
+      this.ctx.scale(scale, scale);
+
+      // Style du texte
+      this.ctx.font = '100px Arial';
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+      this.ctx.strokeStyle = 'white';
+      this.ctx.lineWidth = 3;
+
+      // Dessiner le texte en stroke
+      this.ctx.strokeText(this.countdownValue.toString(), 0, 0);
+
+      this.ctx.restore();
+    }
   }
 
   private startContinuousAnimation(): void {
@@ -151,6 +207,7 @@ export default class ChooserComponent implements OnDestroy {
 
   private stopAnimation(): void {
     this.isAnimating = false;
+    this.isCountdownActive = false;
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
@@ -158,7 +215,7 @@ export default class ChooserComponent implements OnDestroy {
   }
 
   private animateFrame(): void {
-    if (!this.isAnimating) return;
+    if (!this.isAnimating && !this.isCountdownActive) return;
 
     this.drawTouches();
     this.animationFrameId = requestAnimationFrame(() => this.animateFrame());
@@ -173,24 +230,55 @@ export default class ChooserComponent implements OnDestroy {
     // Arrêter l'animation précédente
     this.stopAnimation();
 
-    // Réinitialiser la sélection
+    // Réinitialiser la sélection et le countdown
     this.selectedTouchId = null;
+    this.isCountdownActive = false;
+    this.countdownValue = 5;
     this.drawTouches();
 
-    // Démarrer un nouveau timer si il y a des cercles
+    // Démarrer un nouveau timer si il y a des cercles et que le countdown n'est pas déjà actif
     const touchIds = Object.keys(this.touches);
-    if (touchIds.length > 0) {
-      this.selectionTimer = setTimeout(() => {
-        // Après 5 secondes, commencer l'animation continue
+    if (touchIds.length > 0 && !this.isCountdownActive) {
+      this.startCountdown();
+    } else if (touchIds.length === 0) {
+      // Arrêter le countdown s'il n'y a plus de cercles
+      this.stopAnimation();
+    }
+  }
+
+  private startCountdown(): void {
+    this.isCountdownActive = true;
+    this.countdownValue = 5;
+    this.textAnimationStart = Date.now();
+
+    // Démarrer l'animation frame pour le texte
+    this.animateFrame();
+
+    // Fonction récursive pour le countdown
+    const countdownStep = () => {
+      if (this.countdownValue > 0) {
+        this.textAnimationStart = Date.now();
+        this.selectionTimer = setTimeout(() => {
+          this.countdownValue--;
+          countdownStep();
+        }, 1000);
+      } else {
+        // Fin du countdown
+        this.isCountdownActive = false;
+        this.drawTouches();
+
+        // Commencer l'animation des cercles
         this.startContinuousAnimation();
 
-        // Attendre encore 3 secondes avant de faire la sélection
-        setTimeout(() => {
+        // Attendre 3 secondes avant de faire la sélection
+        this.selectionTimer = setTimeout(() => {
           this.selectRandomCircle();
           this.stopAnimation();
         }, 3000);
-      }, 5000); // 5 secondes d'attente
-    }
+      }
+    };
+
+    countdownStep();
   }
 
   private selectRandomCircle(): void {
