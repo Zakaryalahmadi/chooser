@@ -186,15 +186,25 @@ export default class ChooserComponent implements OnDestroy {
       this.ctx.translate(centerX, centerY);
       this.ctx.scale(scale, scale);
 
+      // Dessiner un fond semi-transparent pour améliorer la visibilité
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, 80, 0, Math.PI * 2);
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      this.ctx.fill();
+
       // Style du texte
-      this.ctx.font = '100px Arial';
+      this.ctx.font = 'bold 100px Arial';
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'middle';
-      this.ctx.strokeStyle = 'white';
-      this.ctx.lineWidth = 3;
 
-      // Dessiner le texte en stroke
+      // Dessiner le texte avec un contour noir épais pour plus de contraste
+      this.ctx.strokeStyle = 'black';
+      this.ctx.lineWidth = 6;
       this.ctx.strokeText(this.countdownValue.toString(), 0, 0);
+
+      // Dessiner le texte en blanc par-dessus
+      this.ctx.fillStyle = 'white';
+      this.ctx.fillText(this.countdownValue.toString(), 0, 0);
 
       this.ctx.restore();
     }
